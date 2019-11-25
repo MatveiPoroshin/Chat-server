@@ -1,9 +1,11 @@
 package com.matv.chatserver.message.service;
 
 import com.matv.chatserver.chat.mapper.ChatConverter;
-import com.matv.chatserver.message.domain.Message;
+import com.matv.chatserver.chat.service.ChatService;
 import com.matv.chatserver.message.repo.MessageRepo;
+import com.matv.chatserver.utils.dto.ChatDto;
 import com.matv.chatserver.utils.dto.MessageDto;
+import javassist.NotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -15,17 +17,16 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class MessageService {
 
-    private MessageRepo repo;
-    private ChatConverter converter;
+    private final MessageRepo repo;
+    private final ChatService chatService;
+    private final ChatConverter converter;
 
     @Transactional
-    public MessageDto save(MessageDto dto) {
+    public ChatDto save(Long chatId, MessageDto dto) throws NotFoundException {
         if (dto == null) {
             throw new IllegalArgumentException("Entity is null");
         }
 
-        Message savedEntity = repo.save(converter.messageDtoToEntity(dto));
-        log.info("message saved " + savedEntity.getId());
-        return converter.messageToDto(savedEntity);
+        return chatService.postNewMessage(chatId, converter.messageDtoToEntity(dto));
     }
 }

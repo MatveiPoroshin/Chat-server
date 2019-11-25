@@ -4,6 +4,7 @@ import com.matv.chatserver.chat.domain.Chat;
 import com.matv.chatserver.chat.mapper.ChatConverter;
 import com.matv.chatserver.chat.repo.ChatRepo;
 import com.matv.chatserver.chat.repo.PersonChatRepo;
+import com.matv.chatserver.message.domain.Message;
 import com.matv.chatserver.person.domain.Person;
 import com.matv.chatserver.person.domain.PersonChat;
 import com.matv.chatserver.person.domain.UserRole;
@@ -18,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -30,10 +32,7 @@ public class ChatService {
     private final ChatConverter converter;
 
     public ChatDto get(Long entityId) throws NotFoundException {
-        Chat entity = chatRepo.findById(entityId)
-                .orElseThrow(() -> new NotFoundException("chat with id " + entityId + " not found"));
-        ;
-        return converter.chatToDto(entity);
+        return converter.chatToDto(getChatEntity(entityId));
     }
 
     @Transactional
@@ -65,8 +64,20 @@ public class ChatService {
         }
     }
 
+    public ChatDto postNewMessage(Long entityId, Message message) throws NotFoundException {
+        Chat chat = getChatEntity(entityId);
+        List<Message> messages = chat.getMessages();
+        messages.add(message);
+        return converter.chatToDto(chatRepo.save(chat));
+    }
+
     private Person getCurrentSessionUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return ((UserPrincipal) authentication.getPrincipal()).getPerson();
+    }
+
+    private Chat getChatEntity(Long entityId) throws NotFoundException {
+        return chatRepo.findById(entityId)
+                .orElseThrow(() -> new NotFoundException("chat with id " + entityId + " not found"));
     }
 }
